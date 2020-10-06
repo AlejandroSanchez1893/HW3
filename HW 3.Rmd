@@ -1,0 +1,138 @@
+---
+title: "HW 3"
+output: html_document
+---
+I used the K-nn algorithm to try and classify boroughs that people reside in. The technique requires you to use different categories in order to try and find the nearest neighbor. I decided to run 3 trials using different categories for each trial. 
+
+For the first trial I decided to not change anything from the examples provided in the lab. 
+```{R}
+load("C:/Users/alejo/Desktop/Econometrics/ecob2000_lecture1/acs2017_ny_data.RData")
+dat_NYC <- subset(acs2017_ny, (acs2017_ny$in_NYC == 1)&(acs2017_ny$AGE > 20) & (acs2017_ny$AGE < 66))
+attach(dat_NYC)
+borough_f <- factor((in_Bronx + 2*in_Manhattan + 3*in_StatenI + 4*in_Brooklyn + 5*in_Queens), levels=c(1,2,3,4,5),labels = c("Bronx","Manhattan","Staten Island","Brooklyn","Queens"))
+```
+
+```{R}
+norm_varb <- function(X_in) {
+  (X_in - min(X_in, na.rm = TRUE))/( max(X_in, na.rm = TRUE) - min(X_in, na.rm = TRUE) )
+}
+```
+
+```{R}
+is.na(OWNCOST) <- which(OWNCOST == 9999999)
+housing_cost <- OWNCOST + RENT
+norm_inc_tot <- norm_varb(INCTOT)
+norm_housing_cost <- norm_varb(housing_cost)
+```
+
+```{R}
+data_use_prelim <- data.frame(norm_inc_tot,norm_housing_cost)
+good_obs_data_use <- complete.cases(data_use_prelim,borough_f)
+dat_use <- subset(data_use_prelim,good_obs_data_use)
+y_use <- subset(borough_f,good_obs_data_use)
+```
+
+```{R}
+set.seed(12345)
+NN_obs <- sum(good_obs_data_use == 1)
+select1 <- (runif(NN_obs) < 0.8)
+train_data <- subset(dat_use,select1)
+test_data <- subset(dat_use,(!select1))
+cl_data <- y_use[select1]
+true_data <- y_use[!select1]
+```
+
+```{R}
+summary(cl_data)
+prop.table(summary(cl_data))
+summary(train_data)
+require(class)
+for (indx in seq(1, 9, by= 2)) {
+ pred_borough <- knn(train_data, test_data, cl_data, k = indx, l = 0, prob = FALSE, use.all = TRUE)
+num_correct_labels <- sum(pred_borough == true_data)
+correct_rate <- (num_correct_labels/length(true_data))*100
+print(c(indx,correct_rate))
+}
++     print(summary(pred_borough))
+
+```
+
+I then remembered what I discussed with my classmates during class in the breakout room and we had discussed that a great way to classify boroughs would be by the cost of utilities so I decided to use that in the following trial where I chose to use the utilities of Electricity, Water, Fuel, and Gas. Below are my results
+
+```{R}
+dat_NYC <- subset(acs2017_ny, (acs2017_ny$in_NYC == 1)&(acs2017_ny$AGE > 20) & (acs2017_ny$AGE < 66))
+attach(dat_NYC)
+borough_f <- factor((in_Bronx + 2*in_Manhattan + 3*in_StatenI + 4*in_Brooklyn + 5*in_Queens), levels=c(1,2,3,4,5),labels = c("Bronx","Manhattan","Staten Island","Brooklyn","Queens"))
+norm_varb <- function(X_in){(X_in - min(X_in, na.rm = TRUE))/( max(X_in, na.rm = TRUE) - min(X_in, na.rm = TRUE) )}
+housing_cost <- COSTELEC + COSTFUEL + COSTGAS + COSTWATR
+norm_inc_tot <- norm_varb(INCTOT)
+norm_housing_cost <- norm_varb(housing_cost)
+data_use_prelim <- data.frame(norm_inc_tot,norm_housing_cost)
+good_obs_data_use <- complete.cases(data_use_prelim,borough_f)
+dat_use <- subset(data_use_prelim,good_obs_data_use)
+y_use <- subset(borough_f,good_obs_data_use)
+```
+
+```{R}
+set.seed(12345)
+NN_obs <- sum(good_obs_data_use == 1)
+select1 <- (runif(NN_obs) < 0.8)
+train_data <- subset(dat_use,select1)
+test_data <- subset(dat_use,(!select1))
+cl_data <- y_use[select1]
+true_data <- y_use[!select1]
+```
+
+```{R}
+summary(cl_data)
+prop.table(summary(cl_data))
+summary(train_data)
+for (indx in seq(1, 9, by= 2)) {
+ pred_borough <- knn(train_data, test_data, cl_data, k = indx, l = 0, prob = FALSE, use.all = TRUE)
+num_correct_labels <- sum(pred_borough == true_data)
+correct_rate <- (num_correct_labels/length(true_data))*100
+print(c(indx,correct_rate))
+}
+print(summary(pred_borough))
+```
+  
+For this last trial I decided to add rent to the utilities from the last trial because it made sense to me that that would be the actual cost of living for a great deal of people who only rent here in NYC and also to see if I could get a more accurate outcome since even though I was able to get a higher accuracy rating than the first trial i was unable to break the 40% mark. 
+
+```{R}
+dat_NYC <- subset(acs2017_ny, (acs2017_ny$in_NYC == 1)&(acs2017_ny$AGE > 20) & (acs2017_ny$AGE < 66))
+attach(dat_NYC)
+borough_f <- factor((in_Bronx + 2*in_Manhattan + 3*in_StatenI + 4*in_Brooklyn + 5*in_Queens), levels=c(1,2,3,4,5),labels = c("Bronx","Manhattan","Staten Island","Brooklyn","Queens"))
+norm_varb <- function(X_in){(X_in - min(X_in, na.rm = TRUE))/( max(X_in, na.rm = TRUE) - min(X_in, na.rm = TRUE) )}
+housing_cost <- COSTELEC + COSTFUEL + COSTGAS + COSTWATR + RENT
+norm_inc_tot <- norm_varb(INCTOT)
+norm_housing_cost <- norm_varb(housing_cost)
+data_use_prelim <- data.frame(norm_inc_tot,norm_housing_cost)
+good_obs_data_use <- complete.cases(data_use_prelim,borough_f)
+dat_use <- subset(data_use_prelim,good_obs_data_use)
+y_use <- subset(borough_f,good_obs_data_use)
+```
+
+```{R}
+set.seed(12345)
+NN_obs <- sum(good_obs_data_use == 1)
+select1 <- (runif(NN_obs) < 0.8)
+train_data <- subset(dat_use,select1)
+test_data <- subset(dat_use,(!select1))
+cl_data <- y_use[select1]
+true_data <- y_use[!select1]
+```
+
+```{R}
+summary(cl_data)
+prop.table(summary(cl_data))
+summary(train_data)
+for (indx in seq(1, 9, by= 2)) {
+ pred_borough <- knn(train_data, test_data, cl_data, k = indx, l = 0, prob = FALSE, use.all = TRUE)
+num_correct_labels <- sum(pred_borough == true_data)
+correct_rate <- (num_correct_labels/length(true_data))*100
+print(c(indx,correct_rate))
+}
+print(summary(pred_borough))
+```
+  
+While the number of people in each borough varied a bit, the accuracy fell since we only see a range of 36% - 39%. What I'm inclined to believe is that rent costs throughout the city are relatively in the same ballpark therefore it wouldn't be much of a deciding factor. 
